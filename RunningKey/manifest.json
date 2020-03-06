@@ -6,5 +6,5 @@
   "UniqueID": "Strato35.RunningKey",
   "EntryDll": "RunningKey.dll",
   "MinimumApiVersion": "3.1.0",
-  "UpdateKeys": []
+  "UpdateKeys": [ "Nexus:5527" ]
 }
