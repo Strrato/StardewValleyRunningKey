@@ -1,6 +1,6 @@
 # Running key for Stardew Valley
 
-First, sorry for my english, I try to improve my english skills but it take times ...
+First, sorry for my english, I try to improve my it but it take times ...
 
 
 This mod add a configurable key enable running (or sprint, technicaly the base game is running but it still a bit slow...)
