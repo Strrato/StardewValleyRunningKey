@@ -12,7 +12,7 @@ Run speed can be configured too.
 Configuration options :
 ```
 {
-  "RunningSpeedGain": 30,       <- Base percent of speed added while running
+  "RunningSpeedGain": 50,       <- Base percent of speed added while running
   "Key": "LeftShift",           <- Key used for run
   "StaminaLose": 1,             <- How many stamina did you lose while running
   "StaminaTick": 15,            <- Update stamina per tiks (it's like a frame rate), you will lose StaminaLose amount every StaminaTick of running
