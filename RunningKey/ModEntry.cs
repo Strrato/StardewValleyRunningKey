@@ -7,7 +7,6 @@ using StardewValley;
 
 namespace RunningKey
 {
-
     public class ModConfig
     {
         /// <summary>
@@ -28,12 +27,12 @@ namespace RunningKey
         /// <summary>
         /// Stamina wil be losed every StaminaTick gameticks
         /// </summary>
-        public int StaminaTick { get; set; } = 15;
+        public int StaminaTick { get; set; } = 30;
 
         /// <summary>
         /// If this limit is reached, run will be disabled
         /// </summary>
-        public int StaminaLimit { get; set; } = 40;
+        public int StaminaLimit { get; set; } = 20;
 
         /// <summary>
         /// Reduction gain speed depends on game, reduction is removed to base gain
@@ -46,6 +45,7 @@ namespace RunningKey
         /// Tile specific gain percent
         /// </summary>
         public int FlooredGainPercent { get; set; } = 10;
+
     }
 
     public class ModEntry : Mod
@@ -56,6 +56,8 @@ namespace RunningKey
         private int BaseStamina;
         private int FinalMinStamina;
         private int lastTickLose;
+        private bool IsRunning { get; set; } = false;
+        private int originalSpeed = 0;
 
 
         public override void Entry(IModHelper helper)
@@ -72,14 +74,27 @@ namespace RunningKey
         {
             if (BaseSpeed > 0 && this.Helper.Input.IsDown(this.Config.Key) && !Game1.player.isRidingHorse() && Game1.player.Stamina > FinalMinStamina)
             {
+                    
+                this.originalSpeed = Game1.player.Speed;
+                    
                 CalculateFinalSpeed();
-                Game1.player.addedSpeed = (int)FinalAdded;
 
-                if (lastTickLose + this.Config.StaminaTick < Game1.ticks)
+                if (FinalAdded > 0)
                 {
-                    Game1.player.Stamina -= this.Config.StaminaLose;
-                    lastTickLose = Game1.ticks;
+                    Game1.player.Speed = (int)FinalAdded + 5;
+                    this.IsRunning = true;
+                
+
+                    if (lastTickLose + this.Config.StaminaTick < Game1.ticks)
+                    {
+                        Game1.player.Stamina -= this.Config.StaminaLose;
+                        lastTickLose = Game1.ticks;
+                    }
                 }
+            }else
+            {
+                //Game1.player.Speed = this.originalSpeed > 0 ? this.originalSpeed : (int)BaseSpeed;
+                this.IsRunning = false;
             }
         }
 
@@ -121,7 +136,7 @@ namespace RunningKey
                     FinalAdded = addPercent(FinalAdded, this.Config.FlooredGainPercent);
                 }else if (currentTile is StardewValley.TerrainFeatures.HoeDirt)
                 {
-                    FinalAdded = removePercent(FinalAdded, this.Config.HoeReductionPercent);
+                    FinalAdded = 0;
                 }
             }
 
