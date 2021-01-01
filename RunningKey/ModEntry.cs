@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -58,7 +59,11 @@ namespace RunningKey
         private int lastTickLose;
         private bool IsRunning { get; set; } = false;
         private int originalSpeed = 0;
-
+        private InputButton gamepadRun;
+        private int GameTickTimeout { get; set; } = 30;
+        private bool WasRunningPad { get; set; } = false;
+        private static int TickRunningTimeout = 15;
+        private bool runPressed = false;
 
         public override void Entry(IModHelper helper)
         {
@@ -72,29 +77,47 @@ namespace RunningKey
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (BaseSpeed > 0 && this.Helper.Input.IsDown(this.Config.Key) && !Game1.player.isRidingHorse() && Game1.player.Stamina > FinalMinStamina)
+            GamePadState currentState = GamePad.GetState(PlayerIndex.One);
+
+            bool keyRun = this.Helper.Input.IsDown(this.Config.Key);
+            bool isMovingThumb = currentState.ThumbSticks.Left.X > 0.1f || currentState.ThumbSticks.Left.X < -0.1f || currentState.ThumbSticks.Left.Y > 0.1f || currentState.ThumbSticks.Left.Y < -0.1f;
+            this.runPressed = currentState.IsConnected && currentState.Buttons.LeftStick == ButtonState.Pressed;
+
+            if (IsRunning && isMovingThumb)
             {
-                    
-                this.originalSpeed = Game1.player.Speed;
-                    
-                CalculateFinalSpeed();
-
-                if (FinalAdded > 0)
-                {
-                    Game1.player.Speed = (int)FinalAdded + 5;
-                    this.IsRunning = true;
-                
-
-                    if (lastTickLose + this.Config.StaminaTick < Game1.ticks)
-                    {
-                        Game1.player.Stamina -= this.Config.StaminaLose;
-                        lastTickLose = Game1.ticks;
-                    }
-                }
+                WasRunningPad = true;
+            }else if (runPressed)
+            {
+                WasRunningPad = true;
             }else
             {
-                //Game1.player.Speed = this.originalSpeed > 0 ? this.originalSpeed : (int)BaseSpeed;
-                this.IsRunning = false;
+                WasRunningPad = false;
+                IsRunning = false;
+            }
+
+            if (BaseSpeed > 0 && (WasRunningPad || keyRun) && Game1.player.Stamina > FinalMinStamina)
+            {
+                run();
+            }
+        }
+
+        private void run()
+        {
+            this.originalSpeed = Game1.player.Speed;
+
+            CalculateFinalSpeed();
+
+            if (FinalAdded > 0)
+            {
+                Game1.player.Speed = (int)FinalAdded + 5;
+                this.IsRunning = true;
+
+
+                if (lastTickLose + this.Config.StaminaTick < Game1.ticks)
+                {
+                    Game1.player.Stamina -= this.Config.StaminaLose;
+                    lastTickLose = Game1.ticks;
+                }
             }
         }
 
