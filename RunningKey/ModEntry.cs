@@ -13,7 +13,7 @@ namespace RunningKey
         /// <summary>
         /// Gain speed percent compared to base speed of the character
         /// </summary>
-        public int RunningSpeedGain { get; set; } = 50;
+        public int RunningSpeedGain { get; set; } = 70;
 
         /// <summary>
         /// Sbutton key tu be pressed to enable run
@@ -52,7 +52,7 @@ namespace RunningKey
     public class ModEntry : Mod
     {
         private ModConfig Config;
-        private float BaseSpeed;
+        private int BaseSpeed;
         private float FinalAdded;
         private int BaseStamina;
         private int FinalMinStamina;
@@ -72,11 +72,19 @@ namespace RunningKey
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
             helper.Events.GameLoop.DayStarted   += this.DayStart;
             helper.Events.GameLoop.DayEnding    += this.DayEnd;
+            helper.Events.GameLoop.SaveLoaded   += this.SaveLoaded;
+        }
 
+        private void SaveLoaded(object sender, SaveLoadedEventArgs e)
+        {
+            BaseSpeed = Game1.player.addedSpeed;
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             GamePadState currentState = GamePad.GetState(PlayerIndex.One);
 
             bool keyRun = this.Helper.Input.IsDown(this.Config.Key);
@@ -95,9 +103,12 @@ namespace RunningKey
                 IsRunning = false;
             }
 
-            if (BaseSpeed > 0 && (WasRunningPad || keyRun) && Game1.player.Stamina > FinalMinStamina)
+            if ((WasRunningPad || keyRun) && Game1.player.Stamina > FinalMinStamina)
             {
                 run();
+            }else if (!IsRunning)
+            {
+                Game1.player.addedSpeed = BaseSpeed;
             }
         }
 
@@ -109,7 +120,8 @@ namespace RunningKey
 
             if (FinalAdded > 0)
             {
-                Game1.player.Speed = (int)FinalAdded + 5;
+                //Game1.player.Speed = (int)FinalAdded + 5;
+                Game1.player.addedSpeed = (int)FinalAdded;
                 this.IsRunning = true;
 
 
@@ -119,12 +131,14 @@ namespace RunningKey
                     lastTickLose = Game1.ticks;
                 }
             }
+            else
+                IsRunning = false;
         }
 
         private void DayStart(object sender, DayStartedEventArgs e)
         {
             // Speed reference
-            BaseSpeed = Game1.player.speed;
+            //BaseSpeed = 5f;
 
             // Stamina reference
             BaseStamina = Game1.player.MaxStamina;
@@ -134,13 +148,18 @@ namespace RunningKey
         private void DayEnd(object sender, DayEndingEventArgs e)
         {
             // Speed reference
-            BaseSpeed = 0f;
+            //BaseSpeed = 0f;
         }
 
 
         private void CalculateFinalSpeed()
         {
-            FinalAdded = addPercent(BaseSpeed, this.Config.RunningSpeedGain);
+            FinalAdded = addPercent(5, this.Config.RunningSpeedGain) - 5;
+            if (FinalAdded < 0)
+            {
+                FinalAdded = FinalAdded * -1;
+            }
+            /*
             Vector2 TileLocation = Game1.player.getTileLocation();
             if (Game1.player.currentLocation.terrainFeatures.ContainsKey(TileLocation))
             {
@@ -159,10 +178,10 @@ namespace RunningKey
                     FinalAdded = addPercent(FinalAdded, this.Config.FlooredGainPercent);
                 }else if (currentTile is StardewValley.TerrainFeatures.HoeDirt)
                 {
-                    FinalAdded = 0;
+                    FinalAdded = removePercent(FinalAdded, this.Config.HoeReductionPercent);
                 }
             }
-
+            */
             var finalSpeed = FinalAdded - BaseSpeed;
             FinalAdded = finalSpeed > 0 ? finalSpeed : 0;
         }
