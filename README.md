@@ -1,8 +1,5 @@
 # Running key for Stardew Valley
 
-First, sorry for my english, I try to improve it but it take times ...
-
-
 This mod add a configurable key enable running (or sprint, technicaly the base game is running but it still a bit slow...)
 The default key is left shift, but the game use it to walk. You can change it, or like I do change the walk key in game option (walk key is called "Run" because of base running option)
 
