@@ -60,11 +60,12 @@ namespace RunningKey
     public class ModEntry : Mod
     {
         private ModConfig Config;
-        private float baseSpeed;
+        private int baseSpeed;
         private float finalAdded;
         private int baseStamina;
         private int finalMinStamina;
         private int lastTickLose;
+        private bool stateChanged = false;
         private bool isRunning { get; set; } = false;
         private int originalSpeed = 0;
         private bool wasRunningPad { get; set; } = false;
@@ -137,7 +138,7 @@ namespace RunningKey
 
             configMenu.AddBoolOption(
                 mod: this.ModManifest,
-                name: () => "Enable gamepad left stick running option",
+                name: () => "Enable gamepad left stick",
                 getValue: () => this.Config.EnableGamePad,
                 setValue: value => this.Config.EnableGamePad = value
             );
@@ -146,7 +147,7 @@ namespace RunningKey
 
         private void SaveLoaded(object sender, SaveLoadedEventArgs e)
         {
-            baseSpeed = Game1.player.addedSpeed;
+            baseSpeed = Game1.player.speed;
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -159,6 +160,7 @@ namespace RunningKey
             bool keyRun = this.Helper.Input.IsDown(this.Config.Key);
             bool isMovingThumb = false;
             bool runPressed = false;
+
 
             if (this.Config.EnableGamePad)
             {
@@ -181,9 +183,11 @@ namespace RunningKey
             if ((wasRunningPad || keyRun) && Game1.player.Stamina > finalMinStamina)
             {
                 run();
-            }else if (!isRunning)
+                stateChanged = true;
+            }else if (!isRunning && stateChanged)
             {
-                Game1.player.addedSpeed = baseSpeed;
+                Game1.player.speed = baseSpeed;
+                stateChanged = false;
             }
         }
 
@@ -196,13 +200,17 @@ namespace RunningKey
             if (finalAdded > 0)
             {
                 //Game1.player.Speed = (int)FinalAdded + 5;
-                Game1.player.addedSpeed = (int)finalAdded;
+                Game1.player.speed = (int)finalAdded;
                 this.isRunning = true;
 
 
                 if (lastTickLose + this.Config.StaminaTick < Game1.ticks)
                 {
-                    Game1.player.Stamina -= this.Config.StaminaLose;
+                    // No more free stamina from running
+                    if (this.Config.StaminaLose > 0)
+                    {
+                        Game1.player.Stamina -= this.Config.StaminaLose;
+                    }
                     lastTickLose = Game1.ticks;
                 }
             }
@@ -235,7 +243,13 @@ namespace RunningKey
                 finalAdded = finalAdded * -1;
             }
 
-            var finalSpeed = finalAdded - baseSpeed;
+            if (!stateChanged)
+            {
+                // Was previously not running, take the previous speed as reference
+                baseSpeed = getSpeedPlayerBuffs() + Game1.player.speed;
+            }
+
+            var finalSpeed = finalAdded + baseSpeed;
             finalAdded = finalSpeed > 0 ? finalSpeed : 0;
         }
 
@@ -247,6 +261,25 @@ namespace RunningKey
         private float removePercent(float baseNumber, int percent)
         {
             return baseNumber - ((percent / 100f) * baseNumber);
+        }
+
+        private int getSpeedPlayerBuffs()
+        {
+            float result = 0;
+
+            if (Game1.player.buffs.AppliedBuffs.Count > 0)
+            {
+                foreach (KeyValuePair<string, Buff> buff in Game1.player.buffs.AppliedBuffs)
+                {
+                    
+                    if (buff.Value.effects.Speed.Value != 0)
+                    {
+                        result += buff.Value.effects.Speed.Value;
+                    }
+                }
+            }
+
+            return (int)result;
         }
     }
 }
