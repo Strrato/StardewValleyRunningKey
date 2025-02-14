@@ -86,13 +86,22 @@ namespace RunningKey
             if (configMenu is null)
                 return;
 
+            configMenu.Register(
+                mod: this.ModManifest,
+                reset: () => this.Config = new ModConfig(),
+                save: () => this.Helper.WriteConfig(this.Config)
+            );
+
             configMenu.AddNumberOption(
                 mod: this.ModManifest,
                 name: () => "Running speed gain",
                 tooltip: () => "% of speed gainned when pressing the running button",
                 getValue: () => this.Config.RunningSpeedGain,
-                setValue: value => this.Config.RunningSpeedGain = value
-                );
+                setValue: value => this.Config.RunningSpeedGain = (int)value,
+                min: 1f,
+                max: 300f,
+                interval: 1
+            );
 
             configMenu.AddKeybind(
                 mod: this.ModManifest,
@@ -100,12 +109,12 @@ namespace RunningKey
                 tooltip: () => "Key to run, be careful to unset leftshift key in original game key binding if you choose this one",
                 getValue: () => this.Config.Key,
                 setValue: value => this.Config.Key = value
-                );
+            );
 
             configMenu.AddNumberOption(
                 mod: this.ModManifest,
                 name: () => "Stamina losed over time",
-                tooltip: () => "% of stamina leached from running, calculated at rate tick in configuration",
+                tooltip: () => "# of stamina leached from running, calculated at rate tick in configuration",
                 getValue: () => this.Config.StaminaLose,
                 setValue: value => this.Config.StaminaLose = value
             );
@@ -131,7 +140,7 @@ namespace RunningKey
                 name: () => "Enable gamepad left stick running option",
                 getValue: () => this.Config.EnableGamePad,
                 setValue: value => this.Config.EnableGamePad = value
-                );
+            );
 
         }
 
@@ -225,29 +234,7 @@ namespace RunningKey
             {
                 finalAdded = finalAdded * -1;
             }
-            /*
-            Vector2 TileLocation = Game1.player.getTileLocation();
-            if (Game1.player.currentLocation.terrainFeatures.ContainsKey(TileLocation))
-            {
-                var currentTile = Game1.player.currentLocation.terrainFeatures[TileLocation];
 
-                if (Game1.isRaining)
-                {
-                    FinalAdded = removePercent(FinalAdded, this.Config.RainReductionPercent);
-                }else if (Game1.isSnowing)
-                {
-                    FinalAdded = removePercent(FinalAdded, this.Config.SnowReductionPercent);
-                }
-
-                if(currentTile is StardewValley.TerrainFeatures.Flooring)
-                {
-                    FinalAdded = addPercent(FinalAdded, this.Config.FlooredGainPercent);
-                }else if (currentTile is StardewValley.TerrainFeatures.HoeDirt)
-                {
-                    FinalAdded = removePercent(FinalAdded, this.Config.HoeReductionPercent);
-                }
-            }
-            */
             var finalSpeed = finalAdded - baseSpeed;
             finalAdded = finalSpeed > 0 ? finalSpeed : 0;
         }
