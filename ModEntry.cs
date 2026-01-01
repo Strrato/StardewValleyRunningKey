@@ -41,6 +41,12 @@ namespace RunningKey
         /// Enable run with left stick on gamepad
         /// </summary>
         public bool EnableGamePad { get; set; } = true;
+        
+        /// <summary>
+        /// Extra speed bonus applied when the base game Auto Run option is disabled AND the player is walking.
+        /// This compensate the walk/run baseline difference trying to make sprint feel consistent.
+        /// </summary>
+        public int AutoRunOffCompensation { get; set; } = 2;
     }
 
     public class ModEntry : Mod
@@ -152,6 +158,14 @@ namespace RunningKey
                 name: () => "Enable gamepad left stick",
                 getValue: () => _config.EnableGamePad,
                 setValue: value => _config.EnableGamePad = value
+            );
+            
+            configMenu.AddNumberOption(
+                mod: ModManifest,
+                name: () => "Compensation for Auto Run disabled when walking",
+                tooltip: () => "If auto run is disabled and the player is walking, this value will be added to the base speed to compensate the walk/run baseline difference trying to make sprint feel consistent.",
+                getValue: () => _config.AutoRunOffCompensation,
+                setValue: value => _config.AutoRunOffCompensation = value
             );
         }
 
@@ -273,6 +287,13 @@ namespace RunningKey
                 finalAdded *= -1;
 
             float finalSpeed = finalAdded + state.BaseSpeed;
+            
+            // Case when auto run is disabled.
+            if (!Game1.options.autoRun && !farmer.running && _config.AutoRunOffCompensation > 0)
+            {
+                finalSpeed += _config.AutoRunOffCompensation;
+            }
+            
             return finalSpeed > 0 ? finalSpeed : 0;
         }
 
