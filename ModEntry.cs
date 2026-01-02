@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using GenericModConfigMenu;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
+﻿using GenericModConfigMenu;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 
 namespace RunningKey
@@ -174,22 +169,26 @@ namespace RunningKey
 
             Farmer farmer = Game1.player;
             PlayerRunState state = GetState(farmer);
-
-            GamePadState currentState = GamePad.GetState(PlayerIndex.One);
-
+            
             bool keyRun = Helper.Input.IsDown(_config.Key);
             bool isMovingThumb = false;
             bool runPressed = false;
+            
 
             if (_config.EnableGamePad)
             {
-                isMovingThumb =
-                    currentState.ThumbSticks.Left.X > 0.1f || currentState.ThumbSticks.Left.X < -0.1f ||
-                    currentState.ThumbSticks.Left.Y > 0.1f || currentState.ThumbSticks.Left.Y < -0.1f;
-                runPressed = currentState.IsConnected && currentState.Buttons.LeftStick == ButtonState.Pressed;
-            }
+                SButtonState stickState = Helper.Input.GetState(SButton.LeftStick);
 
+                isMovingThumb =
+                    Helper.Input.GetState(SButton.LeftThumbstickLeft) == SButtonState.Held ||
+                    Helper.Input.GetState(SButton.LeftThumbstickRight) == SButtonState.Held ||
+                    Helper.Input.GetState(SButton.LeftThumbstickUp) == SButtonState.Held ||
+                    Helper.Input.GetState(SButton.LeftThumbstickDown) == SButtonState.Held;
+                runPressed = stickState == SButtonState.Pressed;
+            }
+            
             bool isMoving = farmer.isMoving();
+            
 
             if (state.IsRunning && isMovingThumb || runPressed)
             {
